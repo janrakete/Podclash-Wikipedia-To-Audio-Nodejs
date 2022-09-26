@@ -1,0 +1,202 @@
+<html>
+	<head>
+		<title>Podclash</title>
+		<style type="text/css">
+			@import url(https://fonts.googleapis.com/icon?family=PT+Mono);
+
+			button, input, label {
+				font-family: 'PT Mono', monospace;
+				font-size: 14px;
+			}
+
+			h2 {
+				font-family: 'PT Mono', monospace;
+			}
+
+			h1 {
+				font-family: 'PT Mono', monospace;
+				color:  lime;
+			}
+
+			button {
+				background-color: lime;
+				color:  black;
+			}
+		    
+		    #topic-result { 
+			  height: 500px;
+			  width: 900px;
+    		}
+
+    		body {
+    			background-color: black;
+    			color: white;
+    		}
+
+    		textarea {
+			  	width: 900px;	
+			  	height: 500px;	
+ 				background-color: black;
+				color: lime;
+				line-height: 1.5;
+    		}
+
+    		span.text {
+				font-family: 'PT Mono', monospace;    			
+				color:  lime;		
+				font-size: 14px;
+    		}
+
+    		button.alternative {
+    			background-color: #8a00ff;
+    			color: white;
+    		}
+		</style>
+	</head>
+	<body>
+		<h1>PODCLASH!</h1>
+
+		<button id="restart" class="alternative">Neu starten!</button>
+		<br />
+		<br />
+
+		<h2>0. Sprache wählen</h2>
+		<div id="language-selection">
+		  <input type="radio" id="language-de" name="language" value="de" checked>
+		  <label for="language-de">Deutsch</label>
+		  <br />
+		  <input type="radio" id="language-en" name="language" value="en">
+		  <label for="language-en">Englisch</label>
+		</div>
+		<br />
+
+		<h2>1. Titel des Wikipedia-Artikel eingeben und abrufen</h2>
+
+		<input type="text" id="topic-input" placeholder="z.B. Donald_Trump" value="Donald_Trump" /> <button id="topic-get">Abrufen</button>
+		<br /><br />
+
+		<h2>2. Eintrag kontrollieren, ggf. leere Stellen löschen</h2>
+
+		<input type="text" id="topic-headline" />
+		<br /><br />
+
+		<div id="topic-result"></div>
+		<br /><br />
+
+		<h2>3. Formatieren und aufteilen</h2>
+		<button id="topic-format">Formatieren und aufteilen</button>
+		<br /><br />
+
+		<div id="sections-all"></div>
+
+
+		<h2>4. In MP3s konvertieren</h2>
+		<button id="audio-get">Konvertieren</button>
+		<br /><br />
+
+		<div id="audio-status"></div>
+
+		<h2>5. Zusammenführen der MP3s</h2>
+		<button id="audio-merge">Zusammenführen</button>
+		<br /><br />
+		<div id="audio-merge-status"></div>
+
+
+		<script src="https://pagecdn.io/lib/jquery/3.6.0/jquery.min.js" crossorigin="anonymous" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" ></script>
+		<script src="ace.js"></script>
+		<script>
+		    var editor = ace.edit("topic-result");
+		    editor.setTheme("ace/theme/monokai");
+			editor.setBehavioursEnabled(false);
+		    editor.session.setMode("ace/mode/xml");
+			editor.session.setOption('indentedSoftWrap', false);
+			editor.session.setUseWrapMode(true);
+			editor.container.style.lineHeight = 1.5;
+			editor.renderer.updateFontSize();
+
+			function sleep(milliseconds) {
+				return new Promise(resolve => setTimeout(resolve, milliseconds));
+			}
+
+			$("#restart").click(function() {
+				location.reload();
+			});
+
+			$("#topic-get").click(function() {
+				$.post("../grabber", { strArticle: $("#topic-input").val(), strLanguage: $("#language-selection input[type='radio']:checked").val() }, function (objData) {
+				  editor.setValue(objData.strExtract);
+				  editor.clearSelection();
+				  editor.focus();
+				  $("#topic-headline").val(objData.strTitle);
+				});
+			});
+
+			$("#topic-format").click(function() {
+				$.post("../formatter", { strArticle: $("#topic-headline").val(), strText: editor.getValue(), strLanguage: $("#language-selection input[type='radio']:checked").val() }, function (strData) {
+					for (let intIndex = 0; intIndex < strData.length; intIndex++) {
+						$("#sections-all").append('<textarea class="text-area" id="section-' + intIndex + '">' + strData[intIndex] + '</textarea><br /><br />');
+					}
+				});
+			});
+
+			$("#audio-get").click(function() {
+				
+				const intMax = $(".text-area").length;
+				let intIndex = 0;
+
+				async function generateAudio() {
+					$("#audio-status").append('<span class="text">Verarbeite Block ' + (intIndex + 1) + '...</span> ');
+					await sleep(5000);
+					$.ajax({
+						async : true,
+						method: "POST",
+						url: "../converter",
+						data: { strArticle: $("#topic-headline").val(), strText: $("#section-" + intIndex).val(), intIndex: intIndex }
+					}).done(function(strData) {
+						$("#audio-status").append('<span class="text">Fertig</span><br />');
+						intIndex++;
+						if (intIndex < intMax) {
+							generateAudio();
+						}
+						else {
+							$("#audio-status").append('<br /><br /><span class="text">Alles erledigt.</span>');
+						}
+					})
+				}
+
+				generateAudio();
+
+				/*for (let intIndex = 0; intIndex < $(".text-area").length; intIndex++) {
+					requestAnimationFrame(function () {
+						$("#audio-status").append('<span class="text">Verarbeite Block ' + (intIndex + 1) + '...</span> ');
+						$(window).trigger('resize');
+						console.log("Block: " + (intIndex + 1));
+						$.ajax({
+							async : false,
+							method: "POST",
+							url: "../converter",
+							data: { strArticle: $("#topic-headline").val(), strText: $("#section-" + intIndex).val(), intIndex: intIndex }
+						}).done(function(strData) {
+							$("#audio-status").append('<span class="text">Fertig</span><br />');
+							console.log("Fertig.");
+						})
+					});
+				};
+				$("#audio-status").append('<br /><br /><span class="text">Alles erledigt. Zusammenführung gestartet ...</span>');*/
+			});
+
+
+			$("#audio-merge").click(function() {
+				$.ajax({
+					async : false,
+					method: "POST",
+					url: "../merger",
+					data: { strArticle: $("#topic-headline").val(), intCount: $(".text-area").length }
+				}).done(function(strData) {
+					$("#audio-merge-status").append('<span class="text">Alles fertig.</span><br />');
+					console.log("Fertig.");
+				});
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "podclash",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "audioconcat": "^0.1.4",
+    "axios": "^0.24.0",
+    "body-parser": "^1.19.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "glob": "^7.2.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.18.1",
+    "nodemon": "^2.0.14"
+  }
+}
