@@ -4,7 +4,7 @@ By Jan
 ## About
 Podclash grabs a Wikipedia article and converts it into an audio file. Before converting you can manually edit the text that will be converted. Because auf some size limit Podclash will split up the text and merges the audio files at the end.
 
-## Getting Started
+## Getting Started!
 
 1. run `https://github.com/janrakete/Podclash-Wikipedia-To-Audio-Nodejs.git` to clone this repository
 2. type `cd Podclash` and then run `npm install`
